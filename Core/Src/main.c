@@ -23,7 +23,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-#include "definitions.h"
+#include "uart.h"
+#include "lcd.h"
+#include "io.h"
 
 /* USER CODE END Includes */
 
@@ -49,6 +51,12 @@ UART_HandleTypeDef huart4;
 uint32_t var_1ms = 0;
 uint32_t var_time = 0;
 
+uint32_t zm_1ms;
+uint32_t czas;
+uint32_t odswiez_ekran;
+uint32_t nr_tekst;
+uint32_t stan_joy;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -57,9 +65,9 @@ static void MX_GPIO_Init(void);
 static void MX_UART4_Init(void);
 /* USER CODE BEGIN PFP */
 
-void time_increment(void)
+void funkcja_1ms(void)
 {
-	var_1ms = 1;
+	zm_1ms=1;
 }
 
 /* USER CODE END PFP */
@@ -92,6 +100,7 @@ int main(void)
 	SystemClock_Config();
 
 	/* USER CODE BEGIN SysInit */
+	initUART();
 
 	/* USER CODE END SysInit */
 
@@ -99,28 +108,51 @@ int main(void)
 	MX_GPIO_Init();
 	MX_UART4_Init();
 	/* USER CODE BEGIN 2 */
+
+	inic_lcd();
 	huart4.Instance->CR1 |= USART_CR1_RXNEIE | USART_CR1_TCIE; // Uruchomienie przerwan dla UART
 
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
+	nr_tekst = ekran_0;
 	while (1)
 	{
+		if(zm_1ms)
+		{
+			zm_1ms = 0;
+			czas++;
+
+			funkcja_led(czas);
+
+			if(++odswiez_ekran == 200)
+			{
+				odswiez_ekran = 0;
+				funkcja_lcd(nr_tekst);
+			}
+
+			if(funkcja_button1() == GPIO_PIN_PUSH)
+			{
+				nr_tekst = ekran_1;
+
+				const uint8_t msg1[] = "Hello STM!";
+				uart_send(msg1, sizeof(msg1));
+			}
+			if(funkcja_button2() == GPIO_PIN_PUSH)
+			{
+				nr_tekst = ekran_2;
+
+				const uint8_t msg2[] = "Message!";
+				uart_send(msg2, sizeof(msg2));
+			}
+
+			stan_joy = funkcja_joy();
+			funkcja_buzzer(stan_joy);
+		}
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-
-		if(var_1ms == 1)
-		{
-			var_1ms = 0;
-			var_time++;
-		}
-
-		if(var_time & 0x0100)
-			HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
-		else
-			HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
 	}
 	/* USER CODE END 3 */
 }
@@ -219,28 +251,28 @@ static void MX_GPIO_Init(void)
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 
 	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOE, LCD_D2_Pin|LCD_D3_Pin|LCD_D4_Pin|LCD_D5_Pin
-			|LCD_D6_Pin|LCD_D7_Pin|LCD_RS_Pin|LCD_E_Pin
-			|LCD_RW_Pin|SPEAKER_Pin|LED1_Pin|LED2_Pin
-			|LCD_D0_Pin|LCD_D1_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOE, lcd_d2_Pin|lcd_d3_Pin|lcd_d4_Pin|lcd_d5_Pin
+			|lcd_d6_Pin|lcd_d7_Pin|lcd_rs_Pin|lcd_e_Pin
+			|lcd_rw_Pin|buzzer_Pin|led1_Pin|led2_Pin
+			|lcd_d0_Pin|lcd_d1_Pin, GPIO_PIN_RESET);
 
-	/*Configure GPIO pins : LCD_D2_Pin LCD_D3_Pin LCD_D4_Pin LCD_D5_Pin
-                           LCD_D6_Pin LCD_D7_Pin LCD_RS_Pin LCD_E_Pin
-                           LCD_RW_Pin SPEAKER_Pin LED1_Pin LED2_Pin
-                           LCD_D0_Pin LCD_D1_Pin */
-	GPIO_InitStruct.Pin = LCD_D2_Pin|LCD_D3_Pin|LCD_D4_Pin|LCD_D5_Pin
-			|LCD_D6_Pin|LCD_D7_Pin|LCD_RS_Pin|LCD_E_Pin
-			|LCD_RW_Pin|SPEAKER_Pin|LED1_Pin|LED2_Pin
-			|LCD_D0_Pin|LCD_D1_Pin;
+	/*Configure GPIO pins : lcd_d2_Pin lcd_d3_Pin lcd_d4_Pin lcd_d5_Pin
+                           lcd_d6_Pin lcd_d7_Pin lcd_rs_Pin lcd_e_Pin
+                           lcd_rw_Pin buzzer_Pin led1_Pin led2_Pin
+                           lcd_d0_Pin lcd_d1_Pin */
+	GPIO_InitStruct.Pin = lcd_d2_Pin|lcd_d3_Pin|lcd_d4_Pin|lcd_d5_Pin
+			|lcd_d6_Pin|lcd_d7_Pin|lcd_rs_Pin|lcd_e_Pin
+			|lcd_rw_Pin|buzzer_Pin|led1_Pin|led2_Pin
+			|lcd_d0_Pin|lcd_d1_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-	/*Configure GPIO pins : BUTTON2_Pin JOY_UP_Pin JOY_DOWN_Pin JOY_RIGHT_Pin
-                           JOY_LEFT_Pin JOY_OK_Pin BUTTON1_Pin */
-	GPIO_InitStruct.Pin = BUTTON2_Pin|JOY_UP_Pin|JOY_DOWN_Pin|JOY_RIGHT_Pin
-			|JOY_LEFT_Pin|JOY_OK_Pin|BUTTON1_Pin;
+	/*Configure GPIO pins : button2_Pin joy_u_Pin joy_d_Pin joy_r_Pin
+                           joy_l_Pin joy_ok_Pin button1_Pin */
+	GPIO_InitStruct.Pin = button2_Pin|joy_u_Pin|joy_d_Pin|joy_r_Pin
+			|joy_l_Pin|joy_ok_Pin|button1_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
