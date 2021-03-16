@@ -64,17 +64,21 @@ void uart_send(const uint8_t *data, uint32_t dataSize)
 
 uint32_t uart_read(uint8_t *output, uint32_t maxSize)
 {
+	uint8_t data;
 	uint32_t readBytes = 0;
-	pendingFrameCount -= 1;
 
 	while(!queueIsEmpty(&uartReceivedData) && (readBytes < maxSize))
 	{
-		queueGet(&uartReceivedData, output);
+		queueGet(&uartReceivedData, &data);
 
-		if(*output == SOT)
+		if(data == SOT) {
+			pendingFrameCount -= 1;
 			continue;
-		if(*output == EOT)
+		}
+		if(data == EOT)
 			break;
+
+		*output = data;
 
 		++output;
 		++readBytes;
