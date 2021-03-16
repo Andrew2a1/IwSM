@@ -13,10 +13,12 @@ uint32_t uart4_data_size;
 
 // Data to receive
 Queue uartReceivedData;
+uint8_t pendingFrameCount;
 
 void initUART(void)
 {
 	queueInit(&uartReceivedData);
+	pendingFrameCount = 0;
 
 	uart4_data = NULL;
 	uart4_data_size = 0;
@@ -33,6 +35,9 @@ void obsluga_UART4 (void)
 	{
 		data = (uint8_t)(UART4->DR);
 		queueAdd(&uartReceivedData, data);
+
+		if(data == EOT)
+			++pendingFrameCount;
 	}
 
 	if ((IIR & USART_SR_TC) && (uart4_data_size > 0))
@@ -60,13 +65,25 @@ void uart_send(const uint8_t *data, uint32_t dataSize)
 uint32_t uart_read(uint8_t *output, uint32_t maxSize)
 {
 	uint32_t readBytes = 0;
+	pendingFrameCount -= 1;
 
 	while(!queueIsEmpty(&uartReceivedData) && (readBytes < maxSize))
 	{
 		queueGet(&uartReceivedData, output);
+
+		if(*output == SOT)
+			continue;
+		if(*output == EOT)
+			break;
+
 		++output;
 		++readBytes;
 	}
 
 	return readBytes;
+}
+
+uint8_t uart_pending_frames()
+{
+	return pendingFrameCount;
 }

@@ -136,7 +136,7 @@ int main(void)
 			{
 				nr_tekst = ekran_1;
 
-				const uint8_t msg1[] = "Nacisnieto przycisk 1\n";
+				static const uint8_t msg1[] = "Nacisnieto przycisk 1\n";
 				if(uart_free())
 					uart_send(msg1, sizeof(msg1)-1);
 			}
@@ -145,9 +145,17 @@ int main(void)
 			{
 				nr_tekst = ekran_2;
 
-				const uint8_t msg2[] = "Nacisnieto przycisk 2\n";
+				static const uint8_t msg2[] = "Nacisnieto przycisk 2\n";
 				if(uart_free())
 					uart_send(msg2, sizeof(msg2)-1);
+			}
+
+			if(uart_pending_frames())
+			{
+				static uint8_t buffer[32];
+				uart_read(buffer, sizeof(buffer));
+
+				// TODO: przetworzenie komendy w tablicy buffer
 			}
 
 			stan_joy = funkcja_joy();
