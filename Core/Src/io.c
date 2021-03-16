@@ -4,7 +4,6 @@
  *  Created on: 06.03.2021
  *      Author: grzeg
  */
-#include "main.h"
 #include "io.h"
 #include "lcd.h"
 

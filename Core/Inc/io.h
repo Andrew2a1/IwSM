@@ -8,11 +8,19 @@
 #ifndef IO_H_
 #define IO_H_
 
+#include "main.h"
+
+#define LED1_ON() (led1_GPIO_Port->BSRR = led1_Pin)
+#define LED1_OFF() (led1_GPIO_Port->BSRR = led1_Pin<<16)
+#define LED1_ON() (led2_GPIO_Port->BSRR = led2_Pin)
+#define LED2_OFF() (led2_GPIO_Port->BSRR = led2_Pin<<16)
+
 typedef enum
 {
   GPIO_PIN_NOPUSH,
   GPIO_PIN_PUSH
 } GPIO_ButtonState;
+
 typedef enum
 {
   ekran_0,
