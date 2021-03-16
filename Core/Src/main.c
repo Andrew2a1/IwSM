@@ -136,15 +136,18 @@ int main(void)
 			{
 				nr_tekst = ekran_1;
 
-				const uint8_t msg1[] = "Hello STM!";
-				uart_send(msg1, sizeof(msg1));
+				const uint8_t msg1[] = "Nacisnieto przycisk 1\n";
+				if(uart_free())
+					uart_send(msg1, sizeof(msg1)-1);
 			}
+
 			if(funkcja_button2() == GPIO_PIN_PUSH)
 			{
 				nr_tekst = ekran_2;
 
-				const uint8_t msg2[] = "Message!";
-				uart_send(msg2, sizeof(msg2));
+				const uint8_t msg2[] = "Nacisnieto przycisk 2\n";
+				if(uart_free())
+					uart_send(msg2, sizeof(msg2)-1);
 			}
 
 			stan_joy = funkcja_joy();

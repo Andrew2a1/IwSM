@@ -42,3 +42,8 @@
 
 # VS code
 .vscode/
+
+Debug/IWSM.bin
+Debug/IWSM.elf
+Debug/IWSM.list
+Debug/IWSM.map
