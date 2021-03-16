@@ -6,6 +6,7 @@
  */
 #include "main.h"
 #include "queue.h"
+#include "uart.h"
 
 // Data to send
 const uint8_t *uart4_data;
