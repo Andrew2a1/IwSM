@@ -55,7 +55,6 @@ uint32_t var_time = 0;
 
 uint32_t zm_1ms;
 uint32_t czas;
-uint32_t odswiez_ekran;
 uint32_t nr_tekst;
 uint32_t stan_joy;
 
@@ -125,14 +124,6 @@ int main(void)
 		{
 			zm_1ms = 0;
 			czas++;
-
-			funkcja_led(czas);
-
-			if(++odswiez_ekran == 200)
-			{
-				odswiez_ekran = 0;
-				funkcja_lcd(nr_tekst);
-			}
 
 			if(funkcja_button1() == GPIO_PIN_PUSH)
 			{
