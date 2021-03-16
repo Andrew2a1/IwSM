@@ -23,6 +23,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "cmd_parse.h"
+
 #include "uart.h"
 #include "lcd.h"
 #include "io.h"
@@ -152,10 +154,9 @@ int main(void)
 
 			if(uart_pending_frames())
 			{
-				static uint8_t buffer[32];
-				uart_read(buffer, sizeof(buffer));
-
-				// TODO: przetworzenie komendy w tablicy buffer
+				static CmdParser parser;
+				parser.cmdSize = uart_read(parser.cmd, CMD_MAX_SIZE);
+				cmd_parser_execute(&parser);
 			}
 
 			stan_joy = funkcja_joy();

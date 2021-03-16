@@ -8,47 +8,47 @@
 #include "lcd.h"
 //TABLICA DEKODERA KODU BINARNEGO NA KOD ASCII LICZBY HEX OD 0 DO F
 const uint8_t t_hex_to_ascii[]="0123456789ABCDEF";
-//ADRESY LINII DO OBS£UGI LCD
+//ADRESY LINII DO OBSï¿½UGI LCD
 #define adres_linia1 0x80
 #define adres_linia2 0xC0
-//ROZKAZY DO OBS£UGI LCD
+//ROZKAZY DO OBSï¿½UGI LCD
 #define display_clear	0x01
 #define set_function	0x38
 #define display_set		0x0c
 #define entry_mode_set	0x06
-/* OPIS POD£ACZENIA WYSWIETLACZA LCD
- * PORTE.0 DO PORTE.7 SYGNA£Y MAGISTRALI DANYCH
- * PORTE.10 SYGNA£ R/W
- * PORTE.9 SYGNA£ E
- * PORTE.8 SYGNA£ RS
+/* OPIS PODï¿½ACZENIA WYSWIETLACZA LCD
+ * PORTE.0 DO PORTE.7 SYGNAï¿½Y MAGISTRALI DANYCH
+ * PORTE.10 SYGNAï¿½ R/W
+ * PORTE.9 SYGNAï¿½ E
+ * PORTE.8 SYGNAï¿½ RS
  */
 
 #define lcd_d_GPIO_Port lcd_d7_GPIO_Port
-#define lcd_config_output() lcd_d_GPIO_Port->CRL=0x33333333// KONFIGURACJA MAG.DANYCH JAKO WYJŒCIA
-#define lcd_config_input()  lcd_d_GPIO_Port->CRL=0x44444444// KONFIGURACJA MAG.DANYCH JAKO WEJŒCIA
-//STEROWANIE SYGNA£EM RW
+#define lcd_config_output() lcd_d_GPIO_Port->CRL=0x33333333// KONFIGURACJA MAG.DANYCH JAKO WYJï¿½CIA
+#define lcd_config_input()  lcd_d_GPIO_Port->CRL=0x44444444// KONFIGURACJA MAG.DANYCH JAKO WEJï¿½CIA
+//STEROWANIE SYGNAï¿½EM RW
 #define clear_rw()	lcd_rw_GPIO_Port->BSRR=lcd_rw_Pin<<16
 #define set_rw()	lcd_rw_GPIO_Port->BSRR=lcd_rw_Pin
-//STEROWANIE SYGNA£EM E
+//STEROWANIE SYGNAï¿½EM E
 #define set_e()		lcd_e_GPIO_Port->BSRR=lcd_e_Pin
 #define clear_e()	lcd_e_GPIO_Port->BSRR=lcd_e_Pin<<16
-//STEROWANIE SYGNA£EM RS
+//STEROWANIE SYGNAï¿½EM RS
 #define clear_rs() 	lcd_rs_GPIO_Port->BSRR=lcd_rs_Pin<<16
 #define set_rs()	lcd_rs_GPIO_Port->BSRR=lcd_rs_Pin
 
 
 
 
-void delay_mili(uint32_t wartosc)// REALIZACJA OPÓNIENIA WYKORZYSTUJ¥CA W£AŒCIWOŒCI SYSTICK
+void delay_mili(uint32_t wartosc)// REALIZACJA OPÓNIENIA WYKORZYSTUJï¿½CA Wï¿½Aï¿½CIWOï¿½CI SYSTICK
 {
 	HAL_Delay(wartosc);
 }
-void delay(uint32_t i)//KRÓTKIE OPÓZNIENIE W PÊTLI
+void delay(uint32_t i)//KRï¿½TKIE OPï¿½ZNIENIE W Pï¿½TLI
 {
 	while(i){i--;}
 }
 
-uint32_t busy_lcd(void)// FUNKCJA ODCZYTU ZAJÊTOŒCI LCD
+uint32_t busy_lcd(void)// FUNKCJA ODCZYTU ZAJï¿½TOï¿½CI LCD
 {
 	uint32_t busy;
 	uint32_t i=160;
@@ -110,8 +110,8 @@ void short_to_ascii(uint16_t dana ,uint8_t *ws)
 {
 	/*
 	 * ZAMIANA LICZBY (ARGUMENT dana) Z ZAKRESU OD 0 DO 999 NA CZTERY KODY ASCII
-	 * REPREZENTUJ¥C¥ T¥ LICZBÊ W FORMIE X.YZ  X - SETKI Y-DZIESI¥TKI , Z-JEDNOŒCI
-	 * KODY UMIESZCZA SIÊ W TABLICY ZMIENNYCH 8-BITOWYCH , KTRÊJ ODRES PODANY JEST POPRZEZ WSKANIK -> ws
+	 * REPREZENTUJï¿½Cï¿½ Tï¿½ LICZBï¿½ W FORMIE X.YZ  X - SETKI Y-DZIESIï¿½TKI , Z-JEDNOï¿½CI
+	 * KODY UMIESZCZA SIï¿½ W TABLICY ZMIENNYCH 8-BITOWYCH , KTRï¿½J ODRES PODANY JEST POPRZEZ WSKAï¿½NIK -> ws
 	 */
 	*(ws)=dana/100 +'0';
 	*(ws+1)=',';
@@ -123,8 +123,8 @@ void hex_to_ascii(uint16_t dana ,uint8_t *ws)
 {
 	/*
 	 * ZAMIANA LICZBY (ARGUMENT dana) Z ZAKRESU OD 0 DO 65355 NA CZTERY KODY ASCII
-	 * REPREZENTUJ¥C¥ T¥ LICZBÊ W FORMIE HEX
-	 * KODY UMIESZCZA SIÊ W TABLICY ZMIENNYCH 8-BITOWYCH , KTRÊJ ODRES PODANY JEST POPRZEZ WSKANIK -> ws
+	 * REPREZENTUJï¿½Cï¿½ Tï¿½ LICZBï¿½ W FORMIE HEX
+	 * KODY UMIESZCZA SIï¿½ W TABLICY ZMIENNYCH 8-BITOWYCH , KTRï¿½J ODRES PODANY JEST POPRZEZ WSKAï¿½NIK -> ws
 	 */
 	*(ws+3)=t_hex_to_ascii[dana & 0x000f];
 	dana=dana>>4;
@@ -137,8 +137,8 @@ void hex_to_ascii(uint16_t dana ,uint8_t *ws)
 uint32_t wysw_ekran(uint8_t *wzm)
 {
 /*
- * WYSY£A 32 ZNAKI Z TABLICY KTÓREJ ADRES OKREŒLONY JEST PRZEZ WSKANIK ->  wzm
- * PIERWSZE 16 ELEMENTÓW TABLICY UMIESZCONE JEST W LINIJCE PIERWSZE POZOSTA£E W DRUGIEJ
+ * WYSYï¿½A 32 ZNAKI Z TABLICY KTï¿½REJ ADRES OKREï¿½LONY JEST PRZEZ WSKAï¿½NIK ->  wzm
+ * PIERWSZE 16 ELEMENTï¿½W TABLICY UMIESZCONE JEST W LINIJCE PIERWSZE POZOSTAï¿½E W DRUGIEJ
  */
 	uint32_t i;
 	write_control(adres_linia1);
