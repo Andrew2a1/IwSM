@@ -42,3 +42,8 @@
 
 # VS code
 .vscode/
+
+
+# Debug 
+Debug/
+IWSM.launch

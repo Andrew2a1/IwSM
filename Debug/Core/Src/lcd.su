@@ -1,9 +1,0 @@
-lcd.c:42:6:delay_mili	16	static
-lcd.c:46:6:delay	16	static
-lcd.c:51:10:busy_lcd	16	static
-lcd.c:70:6:inic_lcd	8	static
-lcd.c:89:6:write_data	16	static
-lcd.c:99:6:write_control	16	static
-lcd.c:109:6:short_to_ascii	16	static
-lcd.c:122:6:hex_to_ascii	16	static
-lcd.c:137:10:wysw_ekran	24	static
