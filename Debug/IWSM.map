@@ -3035,7 +3035,7 @@ LOAD c:/st/stm32cubeide_1.6.0/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.exte
  .debug_str     0x00000000000ad2a0       0x85 Core/Src/system_stm32f1xx.o
                                       0xac3a3 (size before relaxing)
  .debug_str     0x00000000000ad325       0x8f Core/Src/uart.o
-                                      0xac7c1 (size before relaxing)
+                                      0xac7c8 (size before relaxing)
  .debug_str     0x00000000000ad3b4       0x36 Core/Startup/startup_stm32f107vctx.o
                                          0x6e (size before relaxing)
  .debug_str     0x00000000000ad3ea      0x304 Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal.o

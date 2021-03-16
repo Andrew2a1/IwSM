@@ -63,8 +63,8 @@ uint32_t uart_read(uint8_t *output, uint32_t maxSize)
 
 	while(!queueIsEmpty(&uartReceivedData) && (readBytes < maxSize))
 	{
-		queueGet(&uartReceivedData, data);
-		++data;
+		queueGet(&uartReceivedData, output);
+		++output;
 		++readBytes;
 	}
 
