@@ -57,7 +57,7 @@ void uart_send(const uint8_t *data, uint32_t dataSize)
 	uart4_data_size = dataSize;
 }
 
-uint32_t uart_read(uint8_t *data, uint32_t maxSize)
+uint32_t uart_read(uint8_t *output, uint32_t maxSize)
 {
 	uint32_t readBytes = 0;
 
