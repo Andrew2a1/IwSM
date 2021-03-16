@@ -1,6 +1,0 @@
-io.c:16:18:funkcja_button1	8	static
-io.c:40:18:funkcja_button2	8	static
-io.c:65:6:funkcja_led	16	static
-io.c:72:6:funkcja_lcd	16	static
-io.c:78:10:funkcja_joy	8	static
-io.c:88:6:funkcja_buzzer	16	static

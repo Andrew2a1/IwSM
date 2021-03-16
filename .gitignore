@@ -43,7 +43,14 @@
 # VS code
 .vscode/
 
+<<<<<<< HEAD
 Debug/IWSM.bin
 Debug/IWSM.elf
 Debug/IWSM.list
 Debug/IWSM.map
+=======
+
+# Debug 
+Debug/
+IWSM.launch
+>>>>>>> aab39fc54c27744dade89a93b0c483fee7420ee8

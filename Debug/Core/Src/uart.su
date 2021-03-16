@@ -1,5 +1,0 @@
-uart.c:17:6:initUART	8	static
-uart.c:25:6:obsluga_UART4	16	static
-uart.c:47:10:uart_free	4	static
-uart.c:54:6:uart_send	16	static
-uart.c:60:10:uart_read	24	static
