@@ -86,7 +86,7 @@ void cmd_parser_execute(const CmdParser *parser)
 		static uint8_t text_buffor[32];
 
 		memset(text_buffor, 0, sizeof(text_buffor));
-		memcpy(text_buffor, cmd_args, parser->cmdSize - 5);
+		memcpy(text_buffor, cmd_args, parser->cmdSize - CMD_LEN);
 
 		wysw_ekran(text_buffor);
 	}
