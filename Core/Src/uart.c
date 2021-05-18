@@ -1,66 +1,73 @@
 /*
  * uart.c
  *
- *  Created on: Mar 10, 2021
- *      Author: Grzegorz
+ *  Created on: Mar 22, 2021
+ *      Author: Adam
  */
+
+
 #include "main.h"
-#include "queue.h"
 #include "uart.h"
+#include "queue.h"
 
 // Data to send
-const uint8_t *uart4_data;
-uint32_t uart4_data_size;
+const uint8_t *uart3_data;
+uint32_t uart3_data_size;
 
 // Data to receive
 Queue uartReceivedData;
 uint8_t pendingFrameCount;
 
-void initUART(void)
+void uart3_init(void)
 {
 	queueInit(&uartReceivedData);
 	pendingFrameCount = 0;
 
-	uart4_data = NULL;
-	uart4_data_size = 0;
+	uart3_data = NULL;
+	uart3_data_size = 0;
 }
 
-void obsluga_UART4 (void)
+void uart3_handler(void)
 {
 	uint16_t IIR, data;
 
-	IIR = UART4->SR;
-	UART4->SR &= (~IIR);
+	IIR = USART3->SR;
+	USART3->SR &= (~IIR);
 
 	if (IIR & USART_SR_RXNE)
 	{
-		data = (uint8_t)(UART4->DR);
+		data = (uint8_t)(USART3->DR);
 		queueAdd(&uartReceivedData, data);
 
 		if(data == EOT)
 			++pendingFrameCount;
 	}
 
-	if ((IIR & USART_SR_TC) && (uart4_data_size > 0))
+	else if ((IIR & USART_SR_TC) && (uart3_data_size > 0))
 	{
-		UART4->DR = *uart4_data;
+		USART3->DR = *uart3_data;
 
-		--uart4_data_size;
-		++uart4_data;
+		--uart3_data_size;
+		++uart3_data;
 	}
 }
 
-uint32_t uart_free(void)
+uint8_t uart_free(void)
 {
-	if(uart4_data_size)
+	if(uart3_data_size)
 		return 0;
 	return 1;
 }
 
 void uart_send(const uint8_t *data, uint32_t dataSize)
 {
-	uart4_data = data;
-	uart4_data_size = dataSize;
+	if(data)
+	{
+		USART3->DR = *data;
+
+		uart3_data = data + 1;
+		uart3_data_size = dataSize - 1;
+	}
 }
 
 uint32_t uart_read(uint8_t *output, uint32_t maxSize)
@@ -70,7 +77,8 @@ uint32_t uart_read(uint8_t *output, uint32_t maxSize)
 
 	while(!queueIsEmpty(&uartReceivedData) && (readBytes < maxSize))
 	{
-		queueGet(&uartReceivedData, &data);
+		if(!queueGet(&uartReceivedData, &data))
+			break;
 
 		if(data == SOT) {
 			pendingFrameCount -= 1;

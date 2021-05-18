@@ -1,161 +1,171 @@
 /*
  * lcd.c
  *
- *  Created on: Oct 13, 2012
- *      Author: Grzegorz
+ *  Created on: 10/06/2018
+ *      Author: Olivier Van den Eede
  */
-#include "main.h"
+
 #include "lcd.h"
-//TABLICA DEKODERA KODU BINARNEGO NA KOD ASCII LICZBY HEX OD 0 DO F
-const uint8_t t_hex_to_ascii[]="0123456789ABCDEF";
-//ADRESY LINII DO OBS�UGI LCD
-#define adres_linia1 0x80
-#define adres_linia2 0xC0
-//ROZKAZY DO OBS�UGI LCD
-#define display_clear	0x01
-#define set_function	0x38
-#define display_set		0x0c
-#define entry_mode_set	0x06
-/* OPIS POD�ACZENIA WYSWIETLACZA LCD
- * PORTE.0 DO PORTE.7 SYGNA�Y MAGISTRALI DANYCH
- * PORTE.10 SYGNA� R/W
- * PORTE.9 SYGNA� E
- * PORTE.8 SYGNA� RS
+const uint8_t ROW_16[] = {0x00, 0x40, 0x10, 0x50};
+const uint8_t ROW_20[] = {0x00, 0x40, 0x14, 0x54};
+/************************************** Static declarations **************************************/
+
+static void lcd_write_data(Lcd_HandleTypeDef * lcd, uint8_t data);
+static void lcd_write_command(Lcd_HandleTypeDef * lcd, uint8_t command);
+static void lcd_write(Lcd_HandleTypeDef * lcd, uint8_t data, uint8_t len);
+
+
+/************************************** Function definitions **************************************/
+
+/**
+ * Create new Lcd_HandleTypeDef and initialize the Lcd
  */
-
-#define lcd_d_GPIO_Port lcd_d7_GPIO_Port
-#define lcd_config_output() lcd_d_GPIO_Port->CRL=0x33333333// KONFIGURACJA MAG.DANYCH JAKO WYJ�CIA
-#define lcd_config_input()  lcd_d_GPIO_Port->CRL=0x44444444// KONFIGURACJA MAG.DANYCH JAKO WEJ�CIA
-//STEROWANIE SYGNA�EM RW
-#define clear_rw()	lcd_rw_GPIO_Port->BSRR=lcd_rw_Pin<<16
-#define set_rw()	lcd_rw_GPIO_Port->BSRR=lcd_rw_Pin
-//STEROWANIE SYGNA�EM E
-#define set_e()		lcd_e_GPIO_Port->BSRR=lcd_e_Pin
-#define clear_e()	lcd_e_GPIO_Port->BSRR=lcd_e_Pin<<16
-//STEROWANIE SYGNA�EM RS
-#define clear_rs() 	lcd_rs_GPIO_Port->BSRR=lcd_rs_Pin<<16
-#define set_rs()	lcd_rs_GPIO_Port->BSRR=lcd_rs_Pin
-
-
-
-
-void delay_mili(uint32_t wartosc)// REALIZACJA OPӏNIENIA WYKORZYSTUJ�CA W�A�CIWO�CI SYSTICK
+Lcd_HandleTypeDef Lcd_create(
+		Lcd_PortType port[], Lcd_PinType pin[],
+		Lcd_PortType rs_port, Lcd_PinType rs_pin,
+		Lcd_PortType en_port, Lcd_PinType en_pin, Lcd_ModeTypeDef mode)
 {
-	HAL_Delay(wartosc);
-}
-void delay(uint32_t i)//KR�TKIE OP�ZNIENIE W P�TLI
-{
-	while(i){i--;}
+	Lcd_HandleTypeDef lcd;
+
+	lcd.mode = mode;
+
+	lcd.en_pin = en_pin;
+	lcd.en_port = en_port;
+
+	lcd.rs_pin = rs_pin;
+	lcd.rs_port = rs_port;
+
+	lcd.data_pin = pin;
+	lcd.data_port = port;
+
+	Lcd_init(&lcd);
+
+	return lcd;
 }
 
-uint32_t busy_lcd(void)// FUNKCJA ODCZYTU ZAJ�TO�CI LCD
-{
-	uint32_t busy;
-	uint32_t i=160;
-	lcd_config_input();
-	clear_rs();
-	set_rw();
-	while(i)
-	{
-		set_e();
-		delay(4);
-		busy=lcd_d_GPIO_Port->IDR & 0x00ff;
-		clear_e();
-		if((busy & 0x0080)==0)break;
-		i--;
-	}
-	lcd_config_output();
-	return i;
-}
-void inic_lcd(void)//FUNKCJA INICJALIZOWANIA LCD WG DOKUMENTACJI
-{
-	delay_mili(20);
-	write_control(set_function);
-	delay_mili(5);
-	write_control(set_function);
-	delay_mili(1);
-	write_control(set_function);
-	delay_mili(1);
-	write_control(set_function);
-	delay_mili(1);
-	write_control(display_set);
-	delay_mili(1);
-	write_control(entry_mode_set);
-	delay_mili(1);
-	write_control(display_clear);
-	delay_mili(2);
-}
-
-void write_data(uint8_t zm)// FUKCJA ZAPISU DANYCH ARGUMENT DANA
-{
-	set_rs();
-	clear_rw();
-	lcd_d_GPIO_Port->BSRR=0x00ff0000;
-	lcd_d_GPIO_Port->BSRR=(uint32_t)zm;
-	set_e();
-	delay(4);
-	clear_e();
-}
-void write_control(uint8_t zm)// FUKCJA ZAPISU ROZKAZU ARUMENT ROZKAZ
-{
-	clear_rs();
-	clear_rw();
-	lcd_d_GPIO_Port->BSRR=0x00ff0000;
-	lcd_d_GPIO_Port->BSRR=(uint32_t)zm;
-	set_e();
-	delay(4);
-	clear_e();
-}
-void short_to_ascii(uint16_t dana ,uint8_t *ws)
-{
-	/*
-	 * ZAMIANA LICZBY (ARGUMENT dana) Z ZAKRESU OD 0 DO 999 NA CZTERY KODY ASCII
-	 * REPREZENTUJ�C� T� LICZB� W FORMIE X.YZ  X - SETKI Y-DZIESI�TKI , Z-JEDNO�CI
-	 * KODY UMIESZCZA SI� W TABLICY ZMIENNYCH 8-BITOWYCH , KTR�J ODRES PODANY JEST POPRZEZ WSKA�NIK -> ws
-	 */
-	*(ws)=dana/100 +'0';
-	*(ws+1)=',';
-	*(ws+2)=dana%100/10 +'0';
-	*(ws+3)=dana%10 +'0';
-}
-
-void hex_to_ascii(uint16_t dana ,uint8_t *ws)
-{
-	/*
-	 * ZAMIANA LICZBY (ARGUMENT dana) Z ZAKRESU OD 0 DO 65355 NA CZTERY KODY ASCII
-	 * REPREZENTUJ�C� T� LICZB� W FORMIE HEX
-	 * KODY UMIESZCZA SI� W TABLICY ZMIENNYCH 8-BITOWYCH , KTR�J ODRES PODANY JEST POPRZEZ WSKA�NIK -> ws
-	 */
-	*(ws+3)=t_hex_to_ascii[dana & 0x000f];
-	dana=dana>>4;
-	*(ws+2)=t_hex_to_ascii[dana & 0x000f];
-	dana=dana>>4;
-	*(ws+1)=t_hex_to_ascii[dana & 0x000f];
-	dana=dana>>4;
-	*(ws)=t_hex_to_ascii[dana & 0x000f];
-}
-uint32_t wysw_ekran(uint8_t *wzm)
-{
-/*
- * WYSY�A 32 ZNAKI Z TABLICY KT�REJ ADRES OKRE�LONY JEST PRZEZ WSKA�NIK ->  wzm
- * PIERWSZE 16 ELEMENT�W TABLICY UMIESZCONE JEST W LINIJCE PIERWSZE POZOSTA�E W DRUGIEJ
+/**
+ * Initialize 16x2-lcd without cursor
  */
-	uint32_t i;
-	write_control(adres_linia1);
-	if(busy_lcd()==0)return 0;
-	for(i=0;i<16;i++)
+void Lcd_init(Lcd_HandleTypeDef * lcd)
+{
+	if(lcd->mode == LCD_4_BIT_MODE)
 	{
-		write_data(*wzm);
-		wzm++;
-		if(busy_lcd()==0)return 0;
+			lcd_write_command(lcd, 0x33);
+			lcd_write_command(lcd, 0x32);
+			lcd_write_command(lcd, FUNCTION_SET | OPT_N);				// 4-bit mode
 	}
-	write_control(adres_linia2);
-	if(busy_lcd()==0)return 0;
-	for(i=0;i<16;i++)
+	else
+		lcd_write_command(lcd, FUNCTION_SET | OPT_DL | OPT_N);
+
+
+	lcd_write_command(lcd, CLEAR_DISPLAY);						// Clear screen
+	lcd_write_command(lcd, DISPLAY_ON_OFF_CONTROL | OPT_D);		// Lcd-on, cursor-off, no-blink
+	lcd_write_command(lcd, ENTRY_MODE_SET | OPT_INC);			// Increment cursor
+}
+
+/**
+ * Write a number on the current position
+ */
+void Lcd_int(Lcd_HandleTypeDef * lcd, int number)
+{
+	char buffer[11];
+	sprintf(buffer, "%d", number);
+
+	Lcd_string(lcd, buffer);
+}
+
+/**
+ * Write a string on the current position
+ */
+void Lcd_string(Lcd_HandleTypeDef * lcd, char * string)
+{
+	for(uint8_t i = 0; i < strlen(string); i++)
 	{
-		write_data(*wzm);
-		wzm++;
-		if(busy_lcd()==0)return 0;
+		lcd_write_data(lcd, string[i]);
 	}
-	return 1;
+}
+
+/**
+ * Set the cursor position
+ */
+void Lcd_cursor(Lcd_HandleTypeDef * lcd, uint8_t row, uint8_t col)
+{
+	#ifdef LCD20xN
+	lcd_write_command(lcd, SET_DDRAM_ADDR + ROW_20[row] + col);
+	#endif
+
+	#ifdef LCD16xN
+	lcd_write_command(lcd, SET_DDRAM_ADDR + ROW_16[row] + col);
+	#endif
+}
+
+/**
+ * Clear the screen
+ */
+void Lcd_clear(Lcd_HandleTypeDef * lcd) {
+	lcd_write_command(lcd, CLEAR_DISPLAY);
+}
+
+void Lcd_define_char(Lcd_HandleTypeDef * lcd, uint8_t code, uint8_t bitmap[]){
+	lcd_write_command(lcd, SETCGRAM_ADDR + (code << 3));
+	for(uint8_t i=0;i<8;++i){
+		lcd_write_data(lcd, bitmap[i]);
+	}
+
+}
+
+
+/************************************** Static function definition **************************************/
+
+/**
+ * Write a byte to the command register
+ */
+void lcd_write_command(Lcd_HandleTypeDef * lcd, uint8_t command)
+{
+	HAL_GPIO_WritePin(lcd->rs_port, lcd->rs_pin, LCD_COMMAND_REG);		// Write to command register
+
+	if(lcd->mode == LCD_4_BIT_MODE)
+	{
+		lcd_write(lcd, (command >> 4), LCD_NIB);
+		lcd_write(lcd, command & 0x0F, LCD_NIB);
+	}
+	else
+	{
+		lcd_write(lcd, command, LCD_BYTE);
+	}
+
+}
+
+/**
+ * Write a byte to the data register
+ */
+void lcd_write_data(Lcd_HandleTypeDef * lcd, uint8_t data)
+{
+	HAL_GPIO_WritePin(lcd->rs_port, lcd->rs_pin, LCD_DATA_REG);			// Write to data register
+
+	if(lcd->mode == LCD_4_BIT_MODE)
+	{
+		lcd_write(lcd, data >> 4, LCD_NIB);
+		lcd_write(lcd, data & 0x0F, LCD_NIB);
+	}
+	else
+	{
+		lcd_write(lcd, data, LCD_BYTE);
+	}
+
+}
+
+/**
+ * Set len bits on the bus and toggle the enable line
+ */
+void lcd_write(Lcd_HandleTypeDef * lcd, uint8_t data, uint8_t len)
+{
+	for(uint8_t i = 0; i < len; i++)
+	{
+		HAL_GPIO_WritePin(lcd->data_port[i], lcd->data_pin[i], (data >> i) & 0x01);
+	}
+
+	HAL_GPIO_WritePin(lcd->en_port, lcd->en_pin, 1);
+	DELAY(1);
+	HAL_GPIO_WritePin(lcd->en_port, lcd->en_pin, 0); 		// Data receive on falling edge
 }
